@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root1234 # <-- CHANGE THIS
+      POSTGRES_DB: resume_matcher
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      # MUST MATCH THE PASSWORD ABOVE
+      - DATABASE_URL=postgresql://postgres:root1234@db:5432/resume_matcher 
+      - SECRET_KEY=my-super-secret-development-key-change-this-later
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
