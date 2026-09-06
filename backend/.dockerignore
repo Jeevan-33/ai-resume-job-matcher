@@ -1,0 +1,17 @@
+# Local virtualenvs contain Windows binaries and bloat the image
+venv/
+.venv/
+env/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local secrets - docker-compose injects these as environment variables
+.env
+
+.git/
+.gitignore
+uploads/

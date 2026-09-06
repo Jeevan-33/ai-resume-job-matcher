@@ -8,8 +8,10 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    full_name = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships (Allows us to do user.resumes in python)
     resumes = relationship("Resume", back_populates="owner")
+    applications = relationship("Application", back_populates="user")

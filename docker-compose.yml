@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root1234 # <-- CHANGE THIS
-      POSTGRES_DB: resume_matcher
+      POSTGRES_DB: ai_resume_matcher
     ports:
       - "5432:5432"
     volumes:
@@ -20,7 +20,7 @@ services:
       - db
     environment:
       # MUST MATCH THE PASSWORD ABOVE
-      - DATABASE_URL=postgresql://postgres:root1234@db:5432/resume_matcher 
+      - DATABASE_URL=postgresql://postgres:root1234@db:5432/ai_resume_matcher
       - SECRET_KEY=my-super-secret-development-key-change-this-later
 
   frontend:
@@ -29,6 +29,11 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
 volumes:
   postgres_data:

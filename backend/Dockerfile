@@ -13,6 +13,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code
 COPY . .
 
+# Defaults so the image boots even without a bundled .env
+# (docker-compose overrides DATABASE_URL and SECRET_KEY)
+ENV PROJECT_NAME="AI Resume Job Matching API"
+ENV ENVIRONMENT="development"
+
 # Expose the port FastAPI runs on
 EXPOSE 8000
 
