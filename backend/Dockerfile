@@ -12,14 +12,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the backend code
 COPY . .
+RUN chmod +x start.sh
 
 # Defaults so the image boots even without a bundled .env
-# (docker-compose overrides DATABASE_URL and SECRET_KEY)
+# (docker-compose / Render override DATABASE_URL and SECRET_KEY)
 ENV PROJECT_NAME="AI Resume Job Matching API"
 ENV ENVIRONMENT="development"
 
-# Expose the port FastAPI runs on
+# Expose the port FastAPI runs on (Render supplies its own $PORT at runtime)
 EXPOSE 8000
 
-# Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Apply migrations, then start the API. $PORT is set by Render; falls back
+# to 8000 for docker-compose / local runs.
+CMD ["./start.sh"]

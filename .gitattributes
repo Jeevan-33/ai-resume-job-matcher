@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers - keep LF endings regardless
+# of the platform (Windows) this repo is checked out and built on, or
+# Docker's `sh` chokes on the trailing \r.
+*.sh text eol=lf

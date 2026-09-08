@@ -1,0 +1,54 @@
+# Render Blueprint — provisions the whole stack (Postgres + API + web) in
+# one shot. In the Render dashboard: New -> Blueprint -> pick this repo.
+#
+# After the first deploy, seed the jobs table once via the API service's
+# Shell tab:
+#   python -m app.db.seed_jobs
+#
+# Rename the `name:` fields below first if these subdomains are already
+# taken on onrender.com (service URLs are `https://<name>.onrender.com`).
+
+databases:
+  - name: ai-resume-matcher-db
+    databaseName: ai_resume_matcher
+    user: ai_resume_matcher
+    plan: free
+
+services:
+  # FastAPI backend, built from backend/Dockerfile. Runs `alembic upgrade
+  # head` on every boot (see backend/start.sh) before starting uvicorn.
+  - type: web
+    name: ai-resume-matcher-api
+    env: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-resume-matcher-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      # Must match the web service's onrender.com URL below (browser CORS).
+      - key: BACKEND_CORS_ORIGINS
+        value: https://ai-resume-matcher-web.onrender.com
+
+  # React/Vite frontend, built and served via frontend/Dockerfile.prod
+  # (multi-stage: vite build -> nginx). VITE_API_URL is baked into the JS
+  # bundle at build time, so it's passed through as a Docker build arg.
+  - type: web
+    name: ai-resume-matcher-web
+    env: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile.prod
+    dockerContext: ./frontend
+    envVars:
+      # Must match the api service's onrender.com URL above.
+      - key: VITE_API_URL
+        value: https://ai-resume-matcher-api.onrender.com/api

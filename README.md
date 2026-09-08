@@ -132,6 +132,40 @@ npm install
 npm run dev
 ```
 
+## Deploying to Render
+
+The repo ships a [`render.yaml`](./render.yaml) Blueprint that provisions the whole stack —
+Postgres, the FastAPI backend, and the React frontend — as three Render services in one step.
+
+1. Push this repo to GitHub (already done if you're reading this on GitHub).
+2. In the [Render dashboard](https://dashboard.render.com/), click **New > Blueprint** and
+   select this repository. Render reads `render.yaml` and shows a preview of:
+   - `ai-resume-matcher-db` — a free Postgres instance
+   - `ai-resume-matcher-api` — the backend, built from `backend/Dockerfile`. It runs
+     `alembic upgrade head` on every boot (see `backend/start.sh`), then starts uvicorn on
+     Render's assigned `$PORT`. `SECRET_KEY` is auto-generated; `DATABASE_URL` is wired to the
+     Postgres instance automatically.
+   - `ai-resume-matcher-web` — the frontend, built from `frontend/Dockerfile.prod` (a
+     multi-stage `vite build` → nginx image, separate from the dev-only root `Dockerfile`).
+     `VITE_API_URL` is passed in as a Docker build arg so it's baked into the JS bundle.
+3. Click **Apply** and wait for all three services to finish deploying.
+4. One-time only: open the `ai-resume-matcher-api` service's **Shell** tab and run
+   `python -m app.db.seed_jobs` to populate the jobs table.
+5. Visit the `ai-resume-matcher-web` service's `.onrender.com` URL — that's your live app.
+
+**If either `ai-resume-matcher-api` or `ai-resume-matcher-web` is already taken** on
+`onrender.com`, rename the `name:` field for that service in `render.yaml` before applying,
+and update the matching `VITE_API_URL` / `BACKEND_CORS_ORIGINS` values to match.
+
+**Known limitations of this setup:**
+- Both services are on Render's free plan, which spins down after 15 minutes of inactivity
+  (the first request after idling takes ~30–60s to wake back up) and free Postgres instances
+  expire after 90 days unless upgraded.
+- Uploaded resume PDFs are written to local disk (`backend/uploads/`), which is **not**
+  persistent on Render — files are lost on every redeploy/restart. For durable storage, add a
+  paid [Render Disk](https://render.com/docs/disks) mounted at `backend/uploads`, or move
+  uploads to S3-compatible object storage.
+
 ## Environment Variables
 
 Copy `backend/.env.example` to `backend/.env` and fill in real values — this file is
